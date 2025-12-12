@@ -9,9 +9,7 @@ st.set_page_config(page_title="Waste Classifier", layout="centered")
 # -------------------------------------------------------------
 st.markdown("""
 <style>
-[data-testid="stAppViewContainer"] {
-    background-color: #4da6ff;
-}
+[data-testid="stAppViewContainer"] { background-color: #4da6ff; }
 [data-testid="stHeader"] { background: rgba(0,0,0,0); }
 [data-testid="stToolbar"] { display: none; }
 
@@ -21,7 +19,6 @@ st.markdown("""
     font-weight: 900;
     color: white;
 }
-
 .divider {
     height: 4px;
     width: 110px;
@@ -29,7 +26,6 @@ st.markdown("""
     background: white;
     border-radius: 12px;
 }
-
 .result-card {
     padding: 20px;
     margin-top: 20px;
@@ -38,26 +34,22 @@ st.markdown("""
     text-align: center;
     backdrop-filter: blur(8px);
 }
-
 .pred-percent {
     font-size: 50px;
     font-weight: 900;
     color: #00264d;
 }
-
 .pred-label {
     font-size: 32px;
     font-weight: 800;
     color: #003d99;
 }
-
 .sec-title {
     font-size: 25px;
     font-weight: 800;
     margin-top: 20px;
     color: white;
 }
-
 .info-box {
     background: rgba(255,255,255,0.40);
     padding: 14px;
@@ -70,7 +62,7 @@ st.markdown("""
 
 
 # -------------------------------------------------------------
-# FINAL ACCURATE IMAGE CLASSIFIER
+# IMPROVED IMAGE CLASSIFIER
 # -------------------------------------------------------------
 def classify_image(img):
     img = img.resize((160, 160))
@@ -101,29 +93,30 @@ def classify_image(img):
     sat_frac = (s > 180).sum() / total
 
     # ---------------------------------------------------------
-    # CLASSIFICATION RULES (FINAL, ACCURATE)
+    # CLASSIFICATION RULES
     # ---------------------------------------------------------
 
-    # 1) NON-BIO (chips packets: shiny + high variation + saturation)
-    if (variation > 60) or (bright_frac > 0.15 and sat_frac > 0.15):
-        return "Non-Biodegradable Waste", int(90 + variation / 4)
+    # 1) NON-BIO (shiny wrappers, high variation, glossy)
+    if (variation > 60) or (bright_frac > 0.12 and sat_frac > 0.12):
+        confidence = min(100, int(85 + variation / 3))
+        return "Non-Biodegradable Waste", confidence
 
-    # 2) RECYCLABLE (blue plastics, metal cans, bottles)
-    if blue_frac > 0.07 or gray_frac > 0.06:
-        confidence = int(80 + (blue_frac + gray_frac) * 150)
-        return "Recyclable Waste", min(confidence, 98)
+    # 2) RECYCLABLE (blue plastics, metals, glass)
+    if blue_frac > 0.06 or gray_frac > 0.05:
+        confidence = min(100, int(75 + (blue_frac + gray_frac) * 180))
+        return "Recyclable Waste", confidence
 
-    # 3) BIODEGRADABLE (banana peel, fruits, vegetables)
-    if yellow_frac > 0.04 or green_frac > 0.05:
-        confidence = int(85 + (yellow_frac + green_frac) * 120)
-        return "Biodegradable Waste", min(confidence, 98)
+    # 3) BIODEGRADABLE (fruits, vegetables, organic tones)
+    if yellow_frac > 0.03 or green_frac > 0.04:
+        confidence = min(100, int(80 + (yellow_frac + green_frac) * 150))
+        return "Biodegradable Waste", confidence
 
-    # Organic brownish tones
-    if r_mean > 130 and g_mean > 100 and b_mean < 110:
+    # Brownish organic tones
+    if r_mean > 120 and g_mean > 90 and b_mean < 100:
         return "Biodegradable Waste", 85
 
-    # Default to BIO (safest fallback)
-    return "Biodegradable Waste", 80
+    # Default fallback
+    return "Biodegradable Waste", 75
 
 
 # -------------------------------------------------------------
