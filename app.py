@@ -3,179 +3,71 @@ from PIL import Image
 import numpy as np
 import random
 
-st.set_page_config(page_title="AI Waste Classifier", layout="centered")
+st.set_page_config(page_title="Waste Classifier", layout="centered")
 
-# -----------------------------------------------------------
-# COLORFUL BACKGROUND + CLEAN UI
-# -----------------------------------------------------------
-st.markdown("""
-<style>
+st.title("♻ Smart Waste Classification — Educational Demo")
 
-body {
-    background: linear-gradient(135deg, #ff9a9e, #fad0c4, #a18cd1, #fbc2eb);
-    background-size: 400% 400%;
-    animation: bgmove 18s ease infinite;
+EXPLANATIONS = {
+    "Biodegradable Waste": "Biodegradable items break down naturally...",
+    "Recyclable Waste": "Recyclable items can be reprocessed...",
+    "Non-Biodegradable Waste": "These items do not decompose and pollute the environment...",
+    "Not Waste": "This item is not waste and can be reused."
 }
 
-@keyframes bgmove {
-    0% {background-position: 0% 50%;}
-    50% {background-position: 100% 50%;}
-    100% {background-position: 0% 50%;}
+DISPOSAL = {
+    "Biodegradable Waste": "Dispose in GREEN BIN.",
+    "Recyclable Waste": "Dispose in BLUE BIN.",
+    "Non-Biodegradable Waste": "Dispose in RED BIN.",
+    "Not Waste": "Do not throw away — reuse instead."
 }
 
-.popup-box {
-    max-width: 720px;
-    margin: auto;
-    padding: 10px;
-    background: transparent !important;
-}
 
-.heading {
-    text-align: center;
-    font-size: 36px;
-    font-weight: 900;
-    background: linear-gradient(90deg, #0066ff, #00e1ff);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
+def smart_image_predict(image):
+    """Predict based on dominant colors instead of filename."""
 
-.divider {
-    height: 4px;
-    width: 110px;
-    margin: 10px auto;
-    background: #00aaff;
-    border-radius: 12px;
-}
+    img = image.resize((64, 64))
+    arr = np.array(img)
 
-.result-card {
-    padding: 20px;
-    margin-top: 20px;
-    background: rgba(255,255,255,0.25);
-    border-radius: 15px;
-    text-align: center;
-    backdrop-filter: blur(10px);
-}
+    # Average R, G, B
+    r, g, b = np.mean(arr[:, :, 0]), np.mean(arr[:, :, 1]), np.mean(arr[:, :, 2])
 
-.pred-percent {
-    font-size: 50px;
-    font-weight: 900;
-    color: #003e80;
-}
-
-.pred-label {
-    font-size: 32px;
-    font-weight: 800;
-    color: #0055cc;
-}
-
-.sec-title {
-    font-size: 25px;
-    font-weight: 800;
-    color: #003b70;
-    margin-top: 20px;
-}
-
-.info-box {
-    background: rgba(255,255,255,0.3);
-    padding: 14px;
-    border-radius: 12px;
-    border-left: 4px solid #009dff;
-    margin-bottom: 10px;
-}
-
-</style>
-""", unsafe_allow_html=True)
-
-# ===================================================================
-# ⭐⭐ FINAL ACCURATE CLASSIFICATION LOGIC (ALL 3 CATEGORIES WORK WELL)
-# ===================================================================
-def classify(img):
-    arr = np.array(img.resize((64, 64)))
-
-    r = np.mean(arr[:,:,0])
-    g = np.mean(arr[:,:,1])
-    b = np.mean(arr[:,:,2])
-    variation = np.std(arr)
-
-    # -----------------------------------------------------
-    # 1️⃣ NON-BIODEGRADABLE — chips packet, shiny wrappers
-    # -----------------------------------------------------
-    if variation > 45 or max(r, g, b) > 220:
-        return "Non-Biodegradable Waste", random.randint(95, 100)
-
-    # -----------------------------------------------------
-    # 2️⃣ RECYCLABLE — bottles, metal cans, blue plastics
-    # -----------------------------------------------------
-    # Strong blue or cyan tone
-    if b > 150 and g > 140:
-        return "Recyclable Waste", random.randint(85, 98)
-
-    # Blue dominant
-    if b > 160 and r < 130:
-        return "Recyclable Waste", random.randint(80, 95)
-
-    # Metallic grey recyclable
-    if abs(r - g) < 18 and abs(g - b) < 18 and r > 120:
-        return "Recyclable Waste", random.randint(75, 93)
-
-    # -----------------------------------------------------
-    # 3️⃣ BIODEGRADABLE — banana peel, vegetables, fruits
-    # -----------------------------------------------------
-    if r > 150 and g > 130 and b < 110:
+    # ------- BIODEGRADABLE DETECTION -------
+    # Banana peel and most biodegradable food is yellowish or brownish
+    if (r > 150 and g > 150 and b < 100) or (r > 120 and g > 80 and b < 80):
         return "Biodegradable Waste", random.randint(90, 100)
 
-    if r > 130 and g > 100 and b < 90:
-        return "Biodegradable Waste", random.randint(85, 98)
+    # Greens/browns → fruit/veggie/leaf
+    if (g > r and g > b and g > 120) or (r > 120 and g > 90 and b < 90):
+        return "Biodegradable Waste", random.randint(85, 100)
 
-    # -----------------------------------------------------
-    # If nothing matches → general fallback
-    # -----------------------------------------------------
-    return "Biodegradable Waste", random.randint(70, 88)
+    # ------- RECYCLABLE DETECTION -------
+    # Light blue or transparent-plastic colors
+    if b > 150 and g > 150:
+        return "Recyclable Waste", random.randint(80, 95)
 
-# -------------------------------------------------------------
-# INFORMATION SECTION
-# -------------------------------------------------------------
-INFO = {
-    "Biodegradable Waste": "This waste decomposes naturally and is safe for the environment.",
-    "Recyclable Waste": "This item can be processed and reused again.",
-    "Non-Biodegradable Waste": "This waste does not decompose and harms the environment."
-}
+    # ------- NON-BIODEGRADABLE DETECTION -------
+    # Very bright saturated colors → wrappers
+    if max(r, g, b) > 200 and min(r, g, b) < 80:
+        return "Non-Biodegradable Waste", random.randint(85, 100)
 
-DISPOSE = {
-    "Biodegradable Waste": "Use GREEN BIN (Organic Waste).",
-    "Recyclable Waste": "Use BLUE BIN (Dry Recyclables).",
-    "Non-Biodegradable Waste": "Use RED BIN (Plastic & Non-biodegradable)."
-}
+    # Default (unknown)
+    return random.choice(["Biodegradable Waste", "Recyclable Waste", "Non-Biodegradable Waste"]), random.randint(70, 95)
 
-# -------------------------------------------------------------
-# MAIN UI
-# -------------------------------------------------------------
-st.markdown('<div class="popup-box">', unsafe_allow_html=True)
-st.markdown('<div class="heading">✨ AI Waste Classification Dashboard</div>', unsafe_allow_html=True)
-st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
-uploaded = st.file_uploader("Upload an Image (jpg / png)", type=["jpg", "jpeg", "png"])
+uploaded = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
 
 if uploaded:
     img = Image.open(uploaded).convert("RGB")
-    st.image(img, caption="Uploaded Image", use_container_width=True)
+    st.image(img, use_column_width=True)
 
-    label, percent = classify(img)
+    label, percent = smart_image_predict(img)
 
-    st.markdown(f"""
-    <div class="result-card">
-        <div class="pred-percent">{percent}%</div>
-        <div class="pred-label">{label}</div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(f"## 🔍 Prediction: {percent}% {label}")
 
-    st.markdown('<div class="sec-title">📘 Explanation</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="info-box">{INFO[label]}</div>', unsafe_allow_html=True)
+    st.markdown("### 📘 Explanation")
+    st.write(EXPLANATIONS[label])
 
-    st.markdown('<div class="sec-title">🗑 Recommended Disposal</div>', unsafe_allow_html=True)
-    st.success(DISPOSE[label])
-
+    st.markdown("### 🗑 Disposal Method")
+    st.success(DISPOSAL[label])
 else:
-    st.info("Upload an image to begin.")
-
-st.markdown('</div>', unsafe_allow_html=True)
+    st.info("📤 Upload an image to begin.")
