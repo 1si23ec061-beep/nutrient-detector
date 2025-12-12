@@ -5,6 +5,91 @@ import random
 
 st.set_page_config(page_title="Waste Classifier", layout="centered")
 
+# --------------------------------------------------
+# BEAUTIFUL UI / BACKGROUND CSS (ONLY UI CHANGED)
+# --------------------------------------------------
+st.markdown(
+"""
+<style>
+/* Page background: soft green-blue gradient */
+.stApp {
+  background: linear-gradient(135deg, #f0fbf6 0%, #eaf7ff 45%, #f7fff1 100%);
+  background-attachment: fixed;
+}
+
+/* Main content container - translucent card */
+.block-container {
+  max-width: 800px;
+  margin: 28px auto;
+  padding: 28px 32px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.85);
+  box-shadow: 0 10px 30px rgba(3, 10, 18, 0.08);
+  backdrop-filter: blur(6px);
+}
+
+/* App title styling */
+h1, .stTitle {
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  color: #0b6b3a;
+  letter-spacing: 0.2px;
+}
+
+/* Markdown headings */
+h2, h3 {
+  color: #065f46;
+}
+
+/* Image card */
+.stImage img {
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(2,8,23,0.12);
+  border: 1px solid rgba(2,8,23,0.03);
+}
+
+/* File uploader styling */
+.stFileUploader > div {
+  border: 2px dashed rgba(6,95,70,0.12) !important;
+  padding: 14px !important;
+  border-radius: 12px;
+}
+
+/* Prediction text styling */
+div[data-testid="stMarkdownContainer"] h2 {
+  font-size: 20px;
+}
+
+/* Disposal output box styling */
+.stAlert > div[role="status"] {
+  border-left: 6px solid #16a34a;
+  background: linear-gradient(90deg, rgba(16,185,129,0.04), rgba(255,255,255,0.0));
+  padding: 12px 16px !important;
+  border-radius: 8px;
+}
+
+/* Button styling */
+.stButton>button {
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-weight: 600;
+  box-shadow: 0 6px 18px rgba(3,10,23,0.06);
+  border: none;
+  cursor: pointer;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 600px) {
+  .block-container { padding: 18px 16px; margin: 12px; }
+}
+</style>
+""",
+unsafe_allow_html=True
+)
+
+# --------------------------------------------------
+# ORIGINAL FUNCTIONALITY (UNCHANGED)
+# --------------------------------------------------
+
 st.title("♻ Smart Waste Classification")
 
 EXPLANATIONS = {
@@ -20,7 +105,6 @@ DISPOSAL = {
     "Non-Biodegradable Waste": "Dispose in RED BIN.",
     "Not Waste": "Do not throw away — reuse instead."
 }
-
 
 def smart_image_predict(image):
     """Predict based on dominant colors instead of filename."""
