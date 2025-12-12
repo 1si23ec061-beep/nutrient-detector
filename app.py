@@ -3,130 +3,154 @@ from PIL import Image
 import numpy as np
 import random
 
-st.set_page_config(page_title="Pop-Up Waste Classifier", layout="centered")
+st.set_page_config(page_title="Attractive Waste Classifier", layout="centered")
 
-# ============================
-# POP-UP DASHBOARD CSS
-# ============================
+# ===================================
+# ADVANCED GLASSMORPHIC POPUP CSS
+# ===================================
 st.markdown("""
 <style>
 
 body {
-    background: linear-gradient(135deg, #dbeafe, #e8f5e9);
+    background: linear-gradient(135deg, #aac7ff, #c8ffd4);
 }
 
-/* Center popup container */
-.popup-dashboard {
-    max-width: 650px;
+/* Pop-up center dashboard */
+.popup-box {
+    max-width: 720px;
     margin: auto;
     margin-top: 40px;
-    padding: 25px;
-    border-radius: 20px;
-    background: rgba(255,255,255,0.65);
-    backdrop-filter: blur(15px);
-    box-shadow: 0 12px 28px rgba(0,0,0,0.25);
-    animation: fadeIn 0.6s ease;
+    padding: 30px;
+    border-radius: 22px;
+    background: rgba(255,255,255,0.32);
+    backdrop-filter: blur(18px);
+    border: 1.5px solid rgba(255,255,255,0.45);
+
+    /* Glow effect */
+    box-shadow:
+        0 0 25px rgba(30,144,255,0.45),
+        0 0 40px rgba(30,144,255,0.25);
+
+    animation: popin 0.7s ease-out;
 }
 
-/* Smooth fade-in animation */
-@keyframes fadeIn {
-    from {opacity:0; transform: scale(0.94);}
-    to {opacity:1; transform: scale(1);}
+@keyframes popin {
+    from {opacity: 0; transform: scale(0.92);}
+    to {opacity: 1; transform: scale(1);}
 }
 
-.header {
+/* Title */
+.heading {
     text-align: center;
-    font-size: 32px;
+    font-size: 36px;
     font-weight: 900;
-    color: #004c99;
-    margin-bottom: 12px;
+    background: linear-gradient(90deg, #005bea, #00c6fb);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
+/* Subheader */
 .subtext {
     text-align: center;
-    font-size: 16px;
-    color: #333;
-    margin-bottom: 25px;
+    margin-top: -10px;
+    margin-bottom: 20px;
+    color: #222;
+    font-weight: 500;
 }
 
-.prediction-box {
-    background: rgba(255,255,255,0.55);
-    padding: 18px;
-    border-radius: 16px;
-    text-align: center;
+/* Result card */
+.result-card {
     margin-top: 20px;
-    border: 1px solid #cccccc;
-}
+    padding: 20px;
+    border-radius: 18px;
+    text-align: center;
+    background: rgba(255,255,255,0.45);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.5);
 
-.pred-label {
-    font-size: 34px;
-    font-weight: 900;
-    color: #0055aa;
+    box-shadow:
+        0 0 20px rgba(0, 102, 255, 0.25),
+        0 0 40px rgba(0, 102, 255, 0.15);
 }
 
 .pred-percent {
-    font-size: 46px;
+    font-size: 48px;
     font-weight: 900;
-    margin-top: -10px;
-    color: #003366;
+    color: #003c8f;
+    text-shadow: 0 0 10px rgba(0, 102, 255, 0.5);
 }
 
-.section-title {
+.pred-label {
+    font-size: 32px;
+    font-weight: 800;
+    color: #0066cc;
+}
+
+/* Section title */
+.sec-title {
+    font-size: 26px;
+    font-weight: 800;
     margin-top: 25px;
-    font-size: 22px;
-    font-weight: 700;
-    color: #003366;
+    background: linear-gradient(90deg, #004e92, #000428);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
+/* Info box */
+.box {
+    padding: 16px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.35);
+    border-left: 4px solid #0077ff;
+    backdrop-filter: blur(10px);
+    margin-bottom: 10px;
+}
+
+/* Hide footer */
 footer {visibility: hidden;}
 
 </style>
 """, unsafe_allow_html=True)
 
-# ============================
-# CLASSIFICATION LOGIC
-# ============================
+# ===================================
+# CLASSIFICATION LOGIC (Smart Dummy)
+# ===================================
 def classify(img):
-    """Smart color-based dummy classifier"""
     arr = np.array(img.resize((64, 64)))
     r, g, b = np.mean(arr[:,:,0]), np.mean(arr[:,:,1]), np.mean(arr[:,:,2])
 
-    if (r > 150 and g > 150 and b < 120) or (g > 120 and r > 100 and b < 100):
+    if (r > 150 and g > 150 and b < 120) or (g > 120 and r > 110 and b < 100):
         return "Biodegradable Waste", random.randint(90, 100)
+
     if b > 150 and g > 150:
         return "Recyclable Waste", random.randint(85, 98)
+
     if max(r,g,b) > 200 and min(r,g,b) < 80:
         return "Non-Biodegradable Waste", random.randint(88, 100)
 
-    return random.choice([
-        "Biodegradable Waste",
-        "Recyclable Waste",
-        "Non-Biodegradable Waste"
-    ]), random.randint(60, 95)
-
+    return random.choice(["Biodegradable Waste", "Recyclable Waste", "Non-Biodegradable Waste"]), random.randint(60, 95)
 
 INFO = {
-    "Biodegradable Waste": "Breaks down naturally and is compost-friendly.",
-    "Recyclable Waste": "Can be processed again and reused.",
-    "Non-Biodegradable Waste": "Does not decompose and harms the environment."
+    "Biodegradable Waste": "Naturally decomposes. Best for composting.",
+    "Recyclable Waste": "Can be reused through recycling processes.",
+    "Non-Biodegradable Waste": "Does not break down. Harmful to environment."
 }
 
 DISPOSE = {
-    "Biodegradable Waste": "Use **GREEN BIN** — Best for composting.",
-    "Recyclable Waste": "Use **BLUE BIN** — Clean before disposal.",
-    "Non-Biodegradable Waste": "Use **RED BIN** — Avoid burning."
+    "Biodegradable Waste": "✔ GREEN BIN (Organic Waste)",
+    "Recyclable Waste": "✔ BLUE BIN (Dry Recyclables)",
+    "Non-Biodegradable Waste": "✔ RED BIN (Dry Waste)",
 }
 
-# ============================
-# POP-UP DASHBOARD UI
-# ============================
+# ===================================
+# POP-UP DASHBOARD CONTENT
+# ===================================
+st.markdown('<div class="popup-box">', unsafe_allow_html=True)
 
-st.markdown('<div class="popup-dashboard">', unsafe_allow_html=True)
+st.markdown('<div class="heading">✨ AI Waste Classification Dashboard</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtext">Beautiful pop-up interface with smart waste predictions</div>', unsafe_allow_html=True)
 
-st.markdown('<div class="header">✨ AI Waste Classifier</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtext">Smart classification inside a beautiful pop-up dashboard</div>', unsafe_allow_html=True)
-
-uploaded = st.file_uploader("Upload Image", type=["jpg", "jpeg", "png"])
+uploaded = st.file_uploader("Upload an Image", type=["jpg","jpeg","png"])
 
 if uploaded:
     img = Image.open(uploaded).convert("RGB")
@@ -134,18 +158,23 @@ if uploaded:
 
     label, percent = classify(img)
 
-    st.markdown('<div class="prediction-box">', unsafe_allow_html=True)
-    st.markdown(f'<div class="pred-percent">{percent}%</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="pred-label">{label}</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Result Card
+    st.markdown(f"""
+    <div class="result-card">
+        <div class="pred-percent">{percent}%</div>
+        <div class="pred-label">{label}</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    st.markdown('<div class="section-title">📘 Explanation</div>', unsafe_allow_html=True)
-    st.write(INFO[label])
+    # Explanation
+    st.markdown('<div class="sec-title">📘 Explanation</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="box">{INFO[label]}</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="section-title">🗑 Disposal</div>', unsafe_allow_html=True)
+    # Disposal
+    st.markdown('<div class="sec-title">🗑 Recommended Disposal</div>', unsafe_allow_html=True)
     st.success(DISPOSE[label])
 
 else:
     st.info("Upload an image to begin.")
 
-st.markdown('</div>', unsafe_allow_html=True)  # close popup dashboard
+st.markdown('</div>', unsafe_allow_html=True)
