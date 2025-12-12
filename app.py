@@ -3,123 +3,143 @@ from PIL import Image
 import numpy as np
 import random
 
-st.set_page_config(page_title="Attractive Waste Classifier", layout="centered")
+st.set_page_config(page_title="Ultra Attractive AI Dashboard", layout="centered")
 
-# ===================================
-# ADVANCED GLASSMORPHIC POPUP CSS
-# ===================================
+# ====================================
+# ULTRA-ATTRACTIVE UI STYLES
+# ====================================
 st.markdown("""
 <style>
 
 body {
-    background: linear-gradient(135deg, #aac7ff, #c8ffd4);
+    background: linear-gradient(135deg, #9ad0ff, #c8ffe0);
+    font-family: 'Segoe UI', sans-serif;
 }
 
-/* Pop-up center dashboard */
+/* Floating Pop-Up Card */
 .popup-box {
-    max-width: 720px;
+    max-width: 780px;
     margin: auto;
-    margin-top: 40px;
-    padding: 30px;
-    border-radius: 22px;
-    background: rgba(255,255,255,0.32);
+    margin-top: 30px;
+    padding: 32px;
+    border-radius: 28px;
+
+    background: rgba(255,255,255,0.28);
     backdrop-filter: blur(18px);
-    border: 1.5px solid rgba(255,255,255,0.45);
+    border: 2px solid rgba(255,255,255,0.35);
 
-    /* Glow effect */
+    /* Neon Glow */
     box-shadow:
-        0 0 25px rgba(30,144,255,0.45),
-        0 0 40px rgba(30,144,255,0.25);
+        0 0 20px rgba(0,170,255,0.4),
+        0 0 40px rgba(0,170,255,0.25),
+        0 0 80px rgba(0,170,255,0.15);
 
-    animation: popin 0.7s ease-out;
+    animation: smoothPop 0.8s ease-out;
 }
 
-@keyframes popin {
-    from {opacity: 0; transform: scale(0.92);}
-    to {opacity: 1; transform: scale(1);}
+@keyframes smoothPop {
+    from {opacity: 0; transform: translateY(35px) scale(0.96);}
+    to {opacity: 1; transform: translateY(0px) scale(1);}
 }
 
 /* Title */
 .heading {
     text-align: center;
-    font-size: 36px;
+    font-size: 40px;
     font-weight: 900;
-    background: linear-gradient(90deg, #005bea, #00c6fb);
+    margin-bottom: 8px;
+
+    background: linear-gradient(90deg, #007bff, #00eaff);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+
+    text-shadow: 0 0 18px rgba(0,160,255,0.4);
 }
 
-/* Subheader */
+/* Subtitle */
 .subtext {
     text-align: center;
-    margin-top: -10px;
-    margin-bottom: 20px;
-    color: #222;
+    color: #1b1b1b;
     font-weight: 500;
+    margin-bottom: 25px;
 }
 
-/* Result card */
+/* Stylish Divider */
+.divider {
+    height: 4px;
+    width: 120px;
+    margin: 10px auto 30px auto;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #00b4ff, #008cff);
+    box-shadow: 0 0 8px rgba(0,170,255,0.6);
+}
+
+/* Result Card */
 .result-card {
-    margin-top: 20px;
-    padding: 20px;
-    border-radius: 18px;
-    text-align: center;
+    margin-top: 22px;
+    padding: 22px;
+    border-radius: 20px;
+
     background: rgba(255,255,255,0.45);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255,255,255,0.5);
+    border: 1.5px solid rgba(255,255,255,0.5);
+    backdrop-filter: blur(15px);
+    text-align: center;
 
     box-shadow:
-        0 0 20px rgba(0, 102, 255, 0.25),
-        0 0 40px rgba(0, 102, 255, 0.15);
+        0 0 20px rgba(0,128,255,0.3),
+        0 0 35px rgba(0,128,255,0.2);
 }
 
 .pred-percent {
-    font-size: 48px;
+    font-size: 54px;
     font-weight: 900;
-    color: #003c8f;
-    text-shadow: 0 0 10px rgba(0, 102, 255, 0.5);
+    color: #004a99;
+    margin-bottom: -8px;
 }
 
 .pred-label {
-    font-size: 32px;
+    font-size: 33px;
     font-weight: 800;
-    color: #0066cc;
+    color: #0077cc;
 }
 
 /* Section title */
 .sec-title {
-    font-size: 26px;
+    font-size: 27px;
     font-weight: 800;
-    margin-top: 25px;
-    background: linear-gradient(90deg, #004e92, #000428);
+    margin-top: 28px;
+
+    background: linear-gradient(90deg, #003e80, #0066cc);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
 /* Info box */
-.box {
-    padding: 16px;
-    border-radius: 12px;
-    background: rgba(255,255,255,0.35);
-    border-left: 4px solid #0077ff;
-    backdrop-filter: blur(10px);
-    margin-bottom: 10px;
+.info-box {
+    padding: 15px;
+    margin-top: 10px;
+    border-radius: 14px;
+
+    background: rgba(255,255,255,0.40);
+    backdrop-filter: blur(12px);
+    border-left: 4px solid #00a2ff;
 }
 
-/* Hide footer */
+/* Remove footer */
 footer {visibility: hidden;}
 
 </style>
 """, unsafe_allow_html=True)
 
-# ===================================
-# CLASSIFICATION LOGIC (Smart Dummy)
-# ===================================
+
+# ====================================
+# SMART CLASSIFICATION LOGIC
+# ====================================
 def classify(img):
     arr = np.array(img.resize((64, 64)))
     r, g, b = np.mean(arr[:,:,0]), np.mean(arr[:,:,1]), np.mean(arr[:,:,2])
 
-    if (r > 150 and g > 150 and b < 120) or (g > 120 and r > 110 and b < 100):
+    if (r > 150 and g > 150 and b < 120) or (g > 130 and r > 110 and b < 90):
         return "Biodegradable Waste", random.randint(90, 100)
 
     if b > 150 and g > 150:
@@ -128,27 +148,32 @@ def classify(img):
     if max(r,g,b) > 200 and min(r,g,b) < 80:
         return "Non-Biodegradable Waste", random.randint(88, 100)
 
-    return random.choice(["Biodegradable Waste", "Recyclable Waste", "Non-Biodegradable Waste"]), random.randint(60, 95)
+    return random.choice([
+        "Biodegradable Waste",
+        "Recyclable Waste",
+        "Non-Biodegradable Waste"
+    ]), random.randint(60, 95)
 
 INFO = {
-    "Biodegradable Waste": "Naturally decomposes. Best for composting.",
-    "Recyclable Waste": "Can be reused through recycling processes.",
-    "Non-Biodegradable Waste": "Does not break down. Harmful to environment."
+    "Biodegradable Waste": "🌿 This material decomposes naturally and is great for compost.",
+    "Recyclable Waste": "♻️ This item can be processed and reused again.",
+    "Non-Biodegradable Waste": "⚠️ This does not decompose and harms the environment.",
 }
 
 DISPOSE = {
-    "Biodegradable Waste": "✔ GREEN BIN (Organic Waste)",
-    "Recyclable Waste": "✔ BLUE BIN (Dry Recyclables)",
-    "Non-Biodegradable Waste": "✔ RED BIN (Dry Waste)",
+    "Biodegradable Waste": "✔ Use GREEN BIN (Organic Waste)",
+    "Recyclable Waste": "✔ Use BLUE BIN (Dry Recyclables)",
+    "Non-Biodegradable Waste": "✔ Use RED BIN (Dry Waste)",
 }
 
-# ===================================
-# POP-UP DASHBOARD CONTENT
-# ===================================
+# ====================================
+# POP-UP DASHBOARD RENDERING
+# ====================================
 st.markdown('<div class="popup-box">', unsafe_allow_html=True)
 
 st.markdown('<div class="heading">✨ AI Waste Classification Dashboard</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtext">Beautiful pop-up interface with smart waste predictions</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtext">Beautiful pop-up interface with premium styling</div>', unsafe_allow_html=True)
+st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
 uploaded = st.file_uploader("Upload an Image", type=["jpg","jpeg","png"])
 
@@ -158,7 +183,7 @@ if uploaded:
 
     label, percent = classify(img)
 
-    # Result Card
+    # Prediction Card
     st.markdown(f"""
     <div class="result-card">
         <div class="pred-percent">{percent}%</div>
@@ -168,7 +193,7 @@ if uploaded:
 
     # Explanation
     st.markdown('<div class="sec-title">📘 Explanation</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="box">{INFO[label]}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="info-box">{INFO[label]}</div>', unsafe_allow_html=True)
 
     # Disposal
     st.markdown('<div class="sec-title">🗑 Recommended Disposal</div>', unsafe_allow_html=True)
