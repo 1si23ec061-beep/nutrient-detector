@@ -1,3 +1,69 @@
+import streamlit as st
+from PIL import Image
+import numpy as np
+
+st.set_page_config(page_title="Waste Classifier", layout="centered")
+
+# -------------------------------------------------------------
+# BLUE BACKGROUND + CLEAN UI
+# -------------------------------------------------------------
+st.markdown("""
+<style>
+[data-testid="stAppViewContainer"] { background-color: #4da6ff; }
+[data-testid="stHeader"] { background: rgba(0,0,0,0); }
+[data-testid="stToolbar"] { display: none; }
+
+.heading {
+    text-align: center;
+    font-size: 36px;
+    font-weight: 900;
+    color: white;
+}
+.divider {
+    height: 4px;
+    width: 110px;
+    margin: 10px auto;
+    background: white;
+    border-radius: 12px;
+}
+.result-card {
+    padding: 20px;
+    margin-top: 20px;
+    border-radius: 15px;
+    background: rgba(255,255,255,0.35);
+    text-align: center;
+    backdrop-filter: blur(8px);
+}
+.pred-percent {
+    font-size: 50px;
+    font-weight: 900;
+    color: #00264d;
+}
+.pred-label {
+    font-size: 32px;
+    font-weight: 800;
+    color: #003d99;
+}
+.sec-title {
+    font-size: 25px;
+    font-weight: 800;
+    margin-top: 20px;
+    color: white;
+}
+.info-box {
+    background: rgba(255,255,255,0.40);
+    padding: 14px;
+    border-radius: 12px;
+    border-left: 4px solid white;
+    color: black;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+# -------------------------------------------------------------
+# FINAL CLASSIFIER FUNCTION
+# -------------------------------------------------------------
 def classify_image(img):
     img = img.resize((160, 160))
     arr = np.array(img).astype(np.float32)
@@ -48,3 +114,63 @@ def classify_image(img):
 
     # Default fallback
     return "Biodegradable Waste", 75
+
+
+# -------------------------------------------------------------
+# DISPLAY INFORMATION
+# -------------------------------------------------------------
+INFO = {
+    "Biodegradable Waste": "Biodegradable items break down naturally (food waste, leaves, paper).",
+    "Recyclable Waste": "Recyclable items can be processed and reused (bottles, cans, glass).",
+    "Non-Biodegradable Waste": "Non-biodegradable items do not decompose (wrappers, packets)."
+}
+
+DISPOSE = {
+    "Biodegradable Waste": "Use the GREEN BIN.",
+    "Recyclable Waste": "Use the BLUE BIN.",
+    "Non-Biodegradable Waste": "Use the RED BIN."
+}
+
+
+# -------------------------------------------------------------
+# MAIN UI
+# -------------------------------------------------------------
+st.markdown('<div class="heading">♻ Smart Waste Classification</div>', unsafe_allow_html=True)
+st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
+
+uploaded = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
+
+if uploaded:
+    img = Image.open(uploaded).convert("RGB")
+    st.image(img, use_column_width=True)
+
+    label, confidence = classify_image(img)
+
+    st.markdown(f"""
+    <div class="result-card">
+        <div class="pred-percent">{confidence}%</div>
+        <div class="pred-label">{label}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<div class="sec-title">📘 Explanation</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="info-box">{INFO[label]}</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="sec-title">🗑 Disposal Method</div>', unsafe_allow_html=True)
+    st.success(DISPOSE[label])
+
+    # Debug panel (optional, helps tuning thresholds)
+    with st.expander("🔍 Debug values"):
+        st.write({
+            "yellow_frac": round((np.array(img)[:,:,0] > 150).mean(), 3),
+            "green_frac": round((np.array(img)[:,:,1] > 120).mean(), 3),
+            "blue_frac": round((np.array(img)[:,:,2] > 150).mean(), 3),
+            "gray_frac": round(((np.abs(np.array(img)[:,:,0]-np.array(img)[:,:,1])<15) & 
+                                (np.abs(np.array(img)[:,:,1]-np.array(img)[:,:,2])<15)).mean(), 3),
+            "variation": round(np.array(img).std(), 2),
+            "bright_frac": round(((np.array(img.convert("HSV"))[:,:,2]) > 230).mean(), 3),
+            "sat_frac": round(((np.array(img.convert("HSV"))[:,:,1]) > 180).mean(), 3)
+        })
+
+else:
+    st.info("📤 Upload an image to begin.")
