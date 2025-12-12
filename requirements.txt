@@ -1,6 +1,4 @@
 streamlit
-numpy
-opencv-python-headless
-tensorflow
-Pillow
-mtcnn
+pillow
+
+
