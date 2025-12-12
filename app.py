@@ -92,28 +92,30 @@ def classify_image(img):
     sat_frac = (s > 180).sum() / total
 
     # ---------------------------------------------------------
-    # CLASSIFICATION RULES (order matters!)
+    # CLASSIFICATION RULES (balanced order)
     # ---------------------------------------------------------
 
-    # 1) BIODEGRADABLE
-    if yellow_frac > 0.03 or green_frac > 0.04:
-        confidence = min(100, int(80 + (yellow_frac + green_frac) * 150))
-        return "Biodegradable Waste", confidence
-    if r_mean > 120 and g_mean > 90 and b_mean < 100:
-        return "Biodegradable Waste", 85
-
-    # 2) RECYCLABLE
-    if blue_frac > 0.06 or gray_frac > 0.05:
-        confidence = min(100, int(75 + (blue_frac + gray_frac) * 180))
-        return "Recyclable Waste", confidence
-
-    # 3) NON-BIO (only if shiny/very varied)
-    if (variation > 100) or (bright_frac > 0.20 and sat_frac > 0.25):
-        confidence = min(100, int(85 + variation / 3))
+    # 1) NON-BIO (shiny wrappers, high variation)
+    if (variation > 110) or (bright_frac > 0.25 and sat_frac > 0.25):
+        confidence = min(100, int(85 + variation / 4))
         return "Non-Biodegradable Waste", confidence
 
+    # 2) RECYCLABLE (blue plastics, metals, glass)
+    if blue_frac > 0.10 or gray_frac > 0.08:
+        confidence = min(100, int(75 + (blue_frac + gray_frac) * 200))
+        return "Recyclable Waste", confidence
+
+    # 3) BIODEGRADABLE (fruits, vegetables, organic tones)
+    if yellow_frac > 0.10 or green_frac > 0.12:
+        confidence = min(100, int(80 + (yellow_frac + green_frac) * 180))
+        return "Biodegradable Waste", confidence
+
+    # Brownish organic tones
+    if r_mean > 135 and g_mean > 105 and b_mean < 115:
+        return "Biodegradable Waste", 85
+
     # Default fallback
-    return "Biodegradable Waste", 75
+    return "Recyclable Waste", 70
 
 
 # -------------------------------------------------------------
@@ -158,19 +160,6 @@ if uploaded:
 
     st.markdown('<div class="sec-title">🗑 Disposal Method</div>', unsafe_allow_html=True)
     st.success(DISPOSE[label])
-
-    # Debug panel (optional, helps tuning thresholds)
-    with st.expander("🔍 Debug values"):
-        st.write({
-            "yellow_frac": round((np.array(img)[:,:,0] > 150).mean(), 3),
-            "green_frac": round((np.array(img)[:,:,1] > 120).mean(), 3),
-            "blue_frac": round((np.array(img)[:,:,2] > 150).mean(), 3),
-            "gray_frac": round(((np.abs(np.array(img)[:,:,0]-np.array(img)[:,:,1])<15) & 
-                                (np.abs(np.array(img)[:,:,1]-np.array(img)[:,:,2])<15)).mean(), 3),
-            "variation": round(np.array(img).std(), 2),
-            "bright_frac": round(((np.array(img.convert("HSV"))[:,:,2]) > 230).mean(), 3),
-            "sat_frac": round(((np.array(img.convert("HSV"))[:,:,1]) > 180).mean(), 3)
-        })
 
 else:
     st.info("📤 Upload an image to begin.")
