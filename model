@@ -1,3 +1,8 @@
-vitamin_model.h5
+This is a simulated trained model file for the Waste Classification Demo.
+No real machine learning model weights are stored here.
+The file is used only for displaying model information in the Streamlit dashboard.
+Model Version: 1.0 (Demo)
+Created: 2024
+
 
 
