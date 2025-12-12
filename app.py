@@ -6,13 +6,13 @@ import random
 st.set_page_config(page_title="Waste Classifier", layout="centered")
 
 # ----------------------------------------
-# LIGHT BLUE BACKGROUND + CLEAN UI
+# SOLID BLUE BACKGROUND + CLEAN UI
 # ----------------------------------------
 st.markdown("""
 <style>
 
 body {
-    background: #cfe8ff;   /* Light Blue Background */
+    background: #4da6ff;   /* Solid Blue Background */
     font-family: 'Segoe UI', sans-serif;
 }
 
@@ -29,7 +29,7 @@ body {
     text-align: center;
     font-size: 36px;
     font-weight: 900;
-    color: #0056b3;   /* Dark Blue for Title */
+    color: white;  /* White text looks best on blue */
 }
 
 /* Divider */
@@ -37,7 +37,7 @@ body {
     height: 4px;
     width: 110px;
     margin: 10px auto;
-    background: #007bff;
+    background: white;
     border-radius: 12px;
 }
 
@@ -46,7 +46,7 @@ body {
     padding: 20px;
     margin-top: 20px;
     border-radius: 15px;
-    background: rgba(255,255,255,0.35);
+    background: rgba(255,255,255,0.40);
     backdrop-filter: blur(8px);
     text-align: center;
 }
@@ -54,13 +54,13 @@ body {
 .pred-percent {
     font-size: 50px;
     font-weight: 900;
-    color: #003c80;
+    color: #001f4d;
 }
 
 .pred-label {
     font-size: 32px;
     font-weight: 800;
-    color: #0055cc;
+    color: #003d99;
 }
 
 /* Section Title */
@@ -68,7 +68,7 @@ body {
     font-size: 25px;
     font-weight: 800;
     margin-top: 18px;
-    color: #003b70;
+    color: white;
 }
 
 /* Info Box */
@@ -76,7 +76,8 @@ body {
     background: rgba(255,255,255,0.40);
     padding: 14px;
     border-radius: 12px;
-    border-left: 4px solid #007bff;
+    border-left: 4px solid white;
+    color: black;
 }
 
 footer {visibility: hidden;}
@@ -87,14 +88,14 @@ footer {visibility: hidden;}
 
 
 # ---------------------------------------------------------
-# FINAL ACCURATE CLASSIFICATION LOGIC (ALL 3 CATEGORIES)
+# FINAL ACCURATE CLASSIFICATION LOGIC
 # ---------------------------------------------------------
 def smart_image_predict(image):
 
     img = image.resize((64, 64))
     arr = np.array(img)
 
-    # FIXED — correct RGB extraction
+    # Extract RGB
     r = np.mean(arr[:,:,0])
     g = np.mean(arr[:,:,1])
     b = np.mean(arr[:,:,2])
