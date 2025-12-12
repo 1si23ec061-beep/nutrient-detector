@@ -2,151 +2,197 @@ import streamlit as st
 from PIL import Image
 import numpy as np
 import random
+import base64
 
-st.set_page_config(page_title="Advanced Waste Classifier", layout="centered")
+st.set_page_config(page_title="AI Waste Classifier", layout="centered")
 
-st.title("♻ Advanced AI Waste Classification Dashboard")
-st.write("Upload any image to get classification, environmental impact, and disposal guidance.")
+# Custom CSS for beautiful UI
+st.markdown("""
+<style>
 
-# ===========================
-# EDUCATIONAL CONTENT
-# ===========================
+html, body {
+    background: linear-gradient(135deg, #E3F2FD, #E8F5E9);
+}
 
-DETAIL_INFO = {
+.upload-box {
+    padding: 20px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.5);
+    border: 2px dashed #90CAF9;
+    text-align: center;
+    color: #1E88E5;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.popup-card {
+    animation: fadeIn 0.8s ease-in-out;
+    padding: 25px;
+    border-radius: 18px;
+    background: rgba(255,255,255,0.75);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    margin-top: 20px;
+}
+
+@keyframes fadeIn {
+    from {opacity:0; transform: scale(0.9);}
+    to {opacity:1; transform: scale(1);}
+}
+
+.result-title {
+    font-size: 34px;
+    font-weight: 800;
+    color: #0077CC;
+    text-align: center;
+}
+
+.result-percent {
+    font-size: 42px;
+    font-weight: 900;
+    text-align: center;
+    color: #004C99;
+}
+
+.info-section {
+    margin-top: 20px;
+    padding: 18px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.6);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.10);
+}
+
+footer {visibility: hidden;}
+
+</style>
+""", unsafe_allow_html=True)
+
+st.title("✨ AI-Powered Waste Classification Dashboard")
+st.markdown("#### A beautiful and interactive educational tool for sustainable waste management.")
+
+# Info dictionary
+INFO = {
     "Biodegradable Waste": """
-### 🌿 Why It’s Biodegradable
-These materials naturally break down through microorganisms.  
-Biodegradable waste reduces pollution and can be turned into **nutrient-rich compost**.
+### 🌿 Why It's Biodegradable
+Biodegradable items naturally decompose into the soil.
 
-### ♻ Environmental Impact
-- Reduces landfill volume  
-- Supports soil health  
-- Low carbon footprint  
+### 🌍 Environmental Impact
+✔ Reduces landfill waste  
+✔ Supports compost-making  
+✔ Eco-friendly  
 
 ### 🧭 Examples
-Banana peel, vegetable scraps, leaves, paper towels.
-
-### 💡 Eco Tip
-Start a home compost bin! Your biodegradable waste can turn into fertilizer.
+Banana peel, leaves, paper, vegetable waste.
 """,
 
     "Recyclable Waste": """
-### 🔁 Why It’s Recyclable
-Recyclable materials can be **processed and reused**, reducing the need for raw materials.
+### 🔁 Why It's Recyclable
+Materials that can be reused after processing.
 
-### ♻ Environmental Impact
-- Saves energy  
-- Reduces pollution  
-- Prevents resource depletion  
+### 🌍 Environmental Impact
+✔ Saves energy  
+✔ Reduces pollution  
+✔ Conserves resources  
 
 ### 🧭 Examples
-Plastic bottles, cardboard, paper, metal cans.
-
-### 💡 Eco Tip
-Always **clean and dry** recyclables before putting them in the blue bin.
+Glass, plastic bottles, cans, cardboard.
 """,
 
     "Non-Biodegradable Waste": """
-### ⚠️ Why It’s Non-Biodegradable
-These materials do **not** break down naturally.  
-They may persist in the environment for **hundreds of years**.
+### ⚠ Not Eco-Friendly
+These materials do not break down for hundreds of years.
 
-### ♻ Environmental Impact
-- Land & water pollution  
-- Harmful to animals  
-- Blocks drainage systems  
+### 🌍 Environmental Impact
+❌ Pollutes soil & water  
+❌ Harms animals  
+❌ Blocks drainage  
 
 ### 🧭 Examples
-Plastic wrappers, chips packets, styrofoam, laminated covers.
-
-### 💡 Eco Tip
-Try to **avoid single-use plastics**. Carry reusable bags & bottles.
+Plastic wrappers, chips packets, styrofoam.
 """,
 
     "Not Waste": """
-### ⭐ This Item is Not Waste
-This item appears reusable or not meant for disposal.
+### ⭐ This Is Not Waste
+This item appears usable and should not be thrown away.
 
 ### 🧭 Examples
-Clothes, toys, tools, gadgets, books.
-
-### 💡 Eco Tip
-Donate or upcycle instead of throwing away.
+Clothes, tools, toys, books.
 """
 }
 
 DISPOSAL = {
-    "Biodegradable Waste": "Dispose in **GREEN BIN** — Compost if possible.",
-    "Recyclable Waste": "Dispose in **BLUE BIN** — Clean & dry first.",
-    "Non-Biodegradable Waste": "Dispose in **RED BIN** — Avoid burning.",
-    "Not Waste": "Do NOT throw away — Reuse or donate."
+    "Biodegradable Waste": "Place in **GREEN BIN** (Organic Waste). Best for composting.",
+    "Recyclable Waste": "Place in **BLUE BIN** after cleaning.",
+    "Non-Biodegradable Waste": "Dispose in **RED BIN**. Avoid burning.",
+    "Not Waste": "Do NOT dispose — reuse or donate."
 }
 
-def smart_image_predict(image):
-    """Advanced dummy classifier using image color patterns."""
-    img = image.resize((64, 64))
+def smart_predict(img):
+    """Smart dummy classifier using color detection."""
+    img = img.resize((64, 64))
     arr = np.array(img)
 
     r, g, b = np.mean(arr[:,:,0]), np.mean(arr[:,:,1]), np.mean(arr[:,:,2])
 
-    # Biodegradable: yellows, greens, browns
-    if (r > 150 and g > 150 and b < 110) or (g > 120 and r > 100 and b < 100):
+    # Biodegradable patterns (yellow/green)
+    if (r > 150 and g > 150 and b < 120) or (g > 120 and r > 100 and b < 90):
         return "Biodegradable Waste", random.randint(90,100)
 
-    # Recyclable: bluish/transparent colors
+    # Recyclable patterns (blue/transparent)
     if b > 150 and g > 150:
         return "Recyclable Waste", random.randint(85,98)
 
-    # Non-biodegradable: saturated bright colors, reds, metallic
-    if max(r, g, b) > 200 and min(r, g, b) < 80:
+    # Non-biodegradable (bright wrappers)
+    if max(r,g,b) > 200 and min(r,g,b) < 80:
         return "Non-Biodegradable Waste", random.randint(88,100)
 
-    # Unknown → guess
     return random.choice(["Biodegradable Waste", "Recyclable Waste", "Non-Biodegradable Waste"]), random.randint(60,95)
 
 
-uploaded = st.file_uploader("📤 Upload an image", type=["jpg","jpeg","png"])
+# Upload box
+uploaded = st.file_uploader("", type=["jpg","jpeg","png"])
+st.markdown('<div class="upload-box">📤 Drop an image here or click to upload</div>', unsafe_allow_html=True)
 
 if uploaded:
-
     img = Image.open(uploaded).convert("RGB")
-    st.image(img, use_column_width=True)
+    st.image(img, caption="Uploaded Image", use_container_width=True)
 
-    # Prediction
-    label, percent = smart_image_predict(img)
+    label, percent = smart_predict(img)
 
-    # Classification Card
+    # Popup result card
     st.markdown(f"""
-        <div style="padding:18px; border-radius:10px; background:#f3faff; border-left:6px solid #0077cc;">
-            <h2 style="margin:0;">🔍 AI Prediction</h2>
-            <h1 style="color:#0077cc; margin-top:10px;">{percent}% {label}</h1>
+        <div class="popup-card">
+            <div class="result-title">🔍 AI Prediction</div>
+            <div class="result-percent">{percent}% {label}</div>
         </div>
     """, unsafe_allow_html=True)
 
-    # Confidence progress bar
+    # Progress bar
     st.progress(percent / 100)
 
-    # Environmental Explanation
-    st.markdown("## 🌍 Detailed Environmental Information")
-    st.write(DETAIL_INFO[label])
+    # Info section
+    st.markdown('<div class="info-section">', unsafe_allow_html=True)
+    st.markdown(INFO[label])
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    # Proper Disposal
-    st.markdown("## 🗑 Recommended Disposal")
+    # Disposal section
+    st.markdown('<div class="info-section">', unsafe_allow_html=True)
+    st.markdown("### 🗑 Recommended Disposal")
     st.success(DISPOSAL[label])
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    # Did You Know section
-    st.markdown("---")
+    # Random fun fact
+    st.markdown('<div class="info-section">', unsafe_allow_html=True)
     st.markdown("### 💡 Did You Know?")
     st.write(random.choice([
-        "Recycling 1 plastic bottle saves enough energy to power a light bulb for 3 hours.",
+        "Recycling one aluminium can saves enough energy to run a TV for 3 hours.",
+        "Banana peels enrich soil with potassium and nitrogen.",
+        "Plastic takes more than **500 years** to decompose.",
         "Composting reduces methane emissions from landfills.",
-        "India generates more than 3.4 million tonnes of plastic waste every year.",
-        "Banana peels enrich soil with potassium and nitrogen when composted.",
-        "Non-biodegradable plastics remain in the environment for over 500 years."
+        "India generates nearly **3.5 million tons** of plastic waste yearly."
     ]))
-
-    st.markdown("---")
-    st.info("This is a **simulated AI classifier** designed for educational and hackathon demos.")
+    st.markdown("</div>", unsafe_allow_html=True)
 
 else:
-    st.info("📤 Upload an image to begin.")
+    st.info("👉 Upload an image to begin analysis.")
