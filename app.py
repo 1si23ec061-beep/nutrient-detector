@@ -5,34 +5,32 @@ import random
 
 st.set_page_config(page_title="Waste Classifier", layout="centered")
 
-# ----------------------------------------
-# SOLID BLUE BACKGROUND + CLEAN UI
-# ----------------------------------------
+# -------------------------------------------------------------
+# ⭐ REAL WORKING BLUE BACKGROUND FOR STREAMLIT
+# -------------------------------------------------------------
 st.markdown("""
 <style>
 
-body {
-    background: #4da6ff;   /* Solid Blue Background */
-    font-family: 'Segoe UI', sans-serif;
+[data-testid="stAppViewContainer"] {
+    background-color: #4da6ff;   /* Solid Blue Background */
 }
 
-/* Center container */
-.popup-box {
-    max-width: 720px;
-    margin: auto;
-    padding: 10px;
-    background: transparent !important;
+[data-testid="stHeader"] {
+    background: rgba(0,0,0,0);   /* Transparent header */
 }
 
-/* Title */
+[data-testid="stToolbar"] {
+    display: none; /* Hide top toolbar */
+}
+
+/* Title Styling */
 .heading {
     text-align: center;
     font-size: 36px;
     font-weight: 900;
-    color: white;  /* White text looks best on blue */
+    color: white;
 }
 
-/* Divider */
 .divider {
     height: 4px;
     width: 110px;
@@ -46,15 +44,15 @@ body {
     padding: 20px;
     margin-top: 20px;
     border-radius: 15px;
-    background: rgba(255,255,255,0.40);
-    backdrop-filter: blur(8px);
+    background: rgba(255,255,255,0.35);
     text-align: center;
+    backdrop-filter: blur(8px);
 }
 
 .pred-percent {
     font-size: 50px;
     font-weight: 900;
-    color: #001f4d;
+    color: #00264d;
 }
 
 .pred-label {
@@ -67,7 +65,7 @@ body {
 .sec-title {
     font-size: 25px;
     font-weight: 800;
-    margin-top: 18px;
+    margin-top: 20px;
     color: white;
 }
 
@@ -80,37 +78,30 @@ body {
     color: black;
 }
 
-footer {visibility: hidden;}
-
 </style>
 """, unsafe_allow_html=True)
 
 
 
 # ---------------------------------------------------------
-# FINAL ACCURATE CLASSIFICATION LOGIC
+# ⭐ WASTE CLASSIFICATION LOGIC (BIO / RECYCLABLE / NON-BIO)
 # ---------------------------------------------------------
 def smart_image_predict(image):
 
     img = image.resize((64, 64))
     arr = np.array(img)
 
-    # Extract RGB
     r = np.mean(arr[:,:,0])
     g = np.mean(arr[:,:,1])
     b = np.mean(arr[:,:,2])
 
     variation = np.std(arr)
 
-    # -----------------------------------------------------
-    # NON-BIODEGRADABLE (chips packet, shiny wrapper)
-    # -----------------------------------------------------
+    # ---- NON-BIODEGRADABLE → Chips packet, shiny wrapper ----
     if variation > 45 or max(r, g, b) > 215:
         return "Non-Biodegradable Waste", random.randint(94, 100)
 
-    # -----------------------------------------------------
-    # RECYCLABLE (blue plastics, bottles, metal cans)
-    # -----------------------------------------------------
+    # ---- RECYCLABLE → Blue bottles, cans, plastics ----
     if b > 150 and g > 130 and r < 140:
         return "Recyclable Waste", random.randint(85, 98)
 
@@ -120,24 +111,20 @@ def smart_image_predict(image):
     if abs(r - g) < 18 and abs(g - b) < 18 and r > 120:
         return "Recyclable Waste", random.randint(75, 93)
 
-    # -----------------------------------------------------
-    # BIODEGRADABLE (banana peel, vegetables, fruits)
-    # -----------------------------------------------------
+    # ---- BIODEGRADABLE → Fruits, vegetables, banana peel ----
     if r > 150 and g > 130 and b < 110:
         return "Biodegradable Waste", random.randint(90, 100)
 
     if r > 120 and g > 90 and b < 80:
         return "Biodegradable Waste", random.randint(85, 98)
 
-    # -----------------------------------------------------
-    # DEFAULT FALLBACK
-    # -----------------------------------------------------
+    # ---- DEFAULT → Assume biodegradable ----
     return "Biodegradable Waste", random.randint(70, 90)
 
 
 
 # ---------------------------------------------------------
-# INFORMATION DISPLAY
+# INFORMATION TEXT
 # ---------------------------------------------------------
 EXPLANATIONS = {
     "Biodegradable Waste": "Biodegradable items break down naturally.",
@@ -156,8 +143,6 @@ DISPOSE = {
 # ---------------------------------------------------------
 # MAIN UI
 # ---------------------------------------------------------
-st.markdown('<div class="popup-box">', unsafe_allow_html=True)
-
 st.markdown('<div class="heading">♻ Smart Waste Classification</div>', unsafe_allow_html=True)
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
@@ -182,11 +167,9 @@ if uploaded:
     st.markdown('<div class="sec-title">📘 Explanation</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="info-box">{EXPLANATIONS[label]}</div>', unsafe_allow_html=True)
 
-    # ---- Disposal ----
+    # ---- Disposal Method ----
     st.markdown('<div class="sec-title">🗑 Disposal Method</div>', unsafe_allow_html=True)
     st.success(DISPOSE[label])
 
 else:
     st.info("📤 Upload an image to begin.")
-
-st.markdown('</div>', unsafe_allow_html=True)
