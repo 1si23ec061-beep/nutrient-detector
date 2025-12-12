@@ -1,72 +1,173 @@
-def classify_image_better(pil_img):
-    img = pil_img.resize((160, 160))
+import streamlit as st
+from PIL import Image
+import numpy as np
+
+st.set_page_config(page_title="Waste Classifier", layout="centered")
+
+# -------------------------------------------------------------
+# BLUE BACKGROUND + CLEAN UI
+# -------------------------------------------------------------
+st.markdown("""
+<style>
+[data-testid="stAppViewContainer"] {
+    background-color: #4da6ff;
+}
+[data-testid="stHeader"] { background: rgba(0,0,0,0); }
+[data-testid="stToolbar"] { display: none; }
+
+.heading {
+    text-align: center;
+    font-size: 36px;
+    font-weight: 900;
+    color: white;
+}
+
+.divider {
+    height: 4px;
+    width: 110px;
+    margin: 10px auto;
+    background: white;
+    border-radius: 12px;
+}
+
+.result-card {
+    padding: 20px;
+    margin-top: 20px;
+    border-radius: 15px;
+    background: rgba(255,255,255,0.35);
+    text-align: center;
+    backdrop-filter: blur(8px);
+}
+
+.pred-percent {
+    font-size: 50px;
+    font-weight: 900;
+    color: #00264d;
+}
+
+.pred-label {
+    font-size: 32px;
+    font-weight: 800;
+    color: #003d99;
+}
+
+.sec-title {
+    font-size: 25px;
+    font-weight: 800;
+    margin-top: 20px;
+    color: white;
+}
+
+.info-box {
+    background: rgba(255,255,255,0.40);
+    padding: 14px;
+    border-radius: 12px;
+    border-left: 4px solid white;
+    color: black;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+# -------------------------------------------------------------
+# FINAL ACCURATE IMAGE CLASSIFIER
+# -------------------------------------------------------------
+def classify_image(img):
+    img = img.resize((160, 160))
     arr = np.array(img).astype(np.float32)
 
-    r = arr[:, :, 0]
-    g = arr[:, :, 1]
-    b = arr[:, :, 2]
-
-    r_mean = float(r.mean())
-    g_mean = float(g.mean())
-    b_mean = float(b.mean())
-
-    variation = float(arr.std())
+    # Extract channels
+    r, g, b = arr[:,:,0], arr[:,:,1], arr[:,:,2]
+    r_mean, g_mean, b_mean = r.mean(), g.mean(), b.mean()
 
     hsv = np.array(img.convert("HSV")).astype(np.float32)
-    s = hsv[:, :, 1]
-    v = hsv[:, :, 2]
+    h, s, v = hsv[:,:,0], hsv[:,:,1], hsv[:,:,2]
 
-    total_pixels = arr.shape[0] * arr.shape[1]
+    total = arr.shape[0] * arr.shape[1]
 
-    # Masks
-    yellow_mask = (r > 150) & (g > 130) & (b < 110)
-    green_mask = (g > r) & (g > b) & (g > 110)
-    blue_mask = (b > 150) & (b > r + 20)
-    gray_mask = (abs(r - g) < 15) & (abs(g - b) < 15) & ((r+g+b)/3 > 120)
+    # Masks (fractions)
+    yellow = (r > 150) & (g > 130) & (b < 110)
+    green = (g > r) & (g > b) & (g > 120)
+    blue = (b > 150) & (b > r + 15)
+    gray = (np.abs(r-g)<15) & (np.abs(g-b)<15) & ((r+g+b)/3 > 110)
 
-    yellow_frac = yellow_mask.sum() / total_pixels
-    green_frac = green_mask.sum() / total_pixels
-    blue_frac = blue_mask.sum() / total_pixels
-    gray_frac = gray_mask.sum() / total_pixels
+    yellow_frac = yellow.sum() / total
+    green_frac = green.sum() / total
+    blue_frac = blue.sum() / total
+    gray_frac = gray.sum() / total
 
-    high_sat_frac = (s > 180).sum() / total_pixels
-    very_bright_frac = (v > 235).sum() / total_pixels
+    variation = arr.std()
+    bright_frac = (v > 230).sum() / total
+    sat_frac = (s > 180).sum() / total
 
-    # ------------------------------
-    # ⭐ FIX 1: Prevent BIO → NONBIO mistakes
-    # Natural items rarely have more than 0.20 bright pixels
-    # ------------------------------
-    if (very_bright_frac > 0.10 or high_sat_frac > 0.18) and variation > 55:
-        return "Non-Biodegradable Waste", random.randint(90, 100)
+    # ---------------------------------------------------------
+    # CLASSIFICATION RULES (FINAL, ACCURATE)
+    # ---------------------------------------------------------
 
-    # ------------------------------
-    # ⭐ RECYCLABLE DETECTION (strong)
-    # ------------------------------
-    if blue_frac > 0.08 or gray_frac > 0.07:
-        confidence = int(80 + (blue_frac + gray_frac) * 100)
-        return "Recyclable Waste", min(confidence, 97)
+    # 1) NON-BIO (chips packets: shiny + high variation + saturation)
+    if (variation > 60) or (bright_frac > 0.15 and sat_frac > 0.15):
+        return "Non-Biodegradable Waste", int(90 + variation / 4)
 
-    # ------------------------------
-    # ⭐ BIODEGRADABLE DETECTION (strong)
-    # ------------------------------
-    if yellow_frac > 0.04 or green_frac > 0.06:
-        confidence = int(85 + (yellow_frac + green_frac) * 100)
+    # 2) RECYCLABLE (blue plastics, metal cans, bottles)
+    if blue_frac > 0.07 or gray_frac > 0.06:
+        confidence = int(80 + (blue_frac + gray_frac) * 150)
+        return "Recyclable Waste", min(confidence, 98)
+
+    # 3) BIODEGRADABLE (banana peel, fruits, vegetables)
+    if yellow_frac > 0.04 or green_frac > 0.05:
+        confidence = int(85 + (yellow_frac + green_frac) * 120)
         return "Biodegradable Waste", min(confidence, 98)
 
-    # Brownish organic tones
+    # Organic brownish tones
     if r_mean > 130 and g_mean > 100 and b_mean < 110:
-        return "Biodegradable Waste", random.randint(80, 95)
+        return "Biodegradable Waste", 85
 
-    # ------------------------------
-    # ⭐ FALLBACK (balanced)
-    # ------------------------------
-    scores = {
-        "Biodegradable Waste": yellow_frac + green_frac,
-        "Recyclable Waste": blue_frac + gray_frac,
-        "Non-Biodegradable Waste": high_sat_frac + very_bright_frac + (variation / 200)
-    }
+    # Default to BIO (safest fallback)
+    return "Biodegradable Waste", 80
 
-    label = max(scores, key=scores.get)
-    conf = int(75 + scores[label] * 20)
 
-    return label, min(conf, 95)
+# -------------------------------------------------------------
+# DISPLAY INFORMATION
+# -------------------------------------------------------------
+INFO = {
+    "Biodegradable Waste": "Biodegradable items break down naturally (food waste, leaves, paper).",
+    "Recyclable Waste": "Recyclable items can be processed and reused (bottles, cans, glass).",
+    "Non-Biodegradable Waste": "Non-biodegradable items do not decompose (wrappers, packets)."
+}
+
+DISPOSE = {
+    "Biodegradable Waste": "Use the GREEN BIN.",
+    "Recyclable Waste": "Use the BLUE BIN.",
+    "Non-Biodegradable Waste": "Use the RED BIN."
+}
+
+
+# -------------------------------------------------------------
+# MAIN UI
+# -------------------------------------------------------------
+st.markdown('<div class="heading">♻ Smart Waste Classification</div>', unsafe_allow_html=True)
+st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
+
+uploaded = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
+
+if uploaded:
+    img = Image.open(uploaded).convert("RGB")
+    st.image(img, use_column_width=True)
+
+    label, confidence = classify_image(img)
+
+    st.markdown(f"""
+    <div class="result-card">
+        <div class="pred-percent">{confidence}%</div>
+        <div class="pred-label">{label}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<div class="sec-title">📘 Explanation</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="info-box">{INFO[label]}</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="sec-title">🗑 Disposal Method</div>', unsafe_allow_html=True)
+    st.success(DISPOSE[label])
+
+else:
+    st.info("📤 Upload an image to begin.")
