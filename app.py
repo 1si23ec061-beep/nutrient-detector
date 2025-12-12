@@ -6,73 +6,70 @@ import random
 st.set_page_config(page_title="AI Waste Classifier", layout="centered")
 
 # ----------------------------------------
-# CLEAN UI (No “Beautiful” Subtitle)
+# FIXED + COLORFUL BACKGROUND (NO WHITE BOARD)
 # ----------------------------------------
 st.markdown("""
 <style>
 
 body {
-    background: linear-gradient(135deg, #cce7ff, #d9ffea);
+    background: linear-gradient(135deg, #ffecd2, #fcb69f, #a1c4fd, #c2e9fb);
+    background-size: 400% 400%;
+    animation: gradientMove 12s ease infinite;
     font-family: 'Segoe UI', sans-serif;
 }
 
-/* MAIN POPUP CONTAINER */
+@keyframes gradientMove {
+    0% {background-position: 0% 50%;}
+    50% {background-position: 100% 50%;}
+    100% {background-position: 0% 50%;}
+}
+
+/* MAIN POPUP CONTAINER (fully transparent → no white board) */
 .popup-box {
     max-width: 700px;
     margin: auto;
-    margin-top: 20px;
-    padding: 25px;
-    border-radius: 18px;
-
-    background: rgba(255,255,255,0.45);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255,255,255,0.4);
-
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    margin-top: 10px;
+    padding: 10px;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
 /* Title */
 .heading {
     text-align: center;
-    font-size: 34px;
+    font-size: 36px;
     font-weight: 900;
-    color: #0066cc;
-}
-
-/* Empty Subtitle (Removed “Beautiful”) */
-.subtext {
-    text-align: center;
-    margin-bottom: 15px;
-    color: #333;
+    background: linear-gradient(90deg, #0066ff, #00ccff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 /* Divider */
 .divider {
-    height: 3px;
-    width: 110px;
+    height: 4px;
+    width: 120px;
     margin: 10px auto 20px auto;
-    background: #0099ff;
-    opacity: 0.7;
+    background: #00aaff;
     border-radius: 20px;
+    opacity: 0.8;
 }
 
 /* Result Card */
 .result-card {
     padding: 18px;
-    margin-top: 18px;
+    margin-top: 20px;
     border-radius: 15px;
-
-    background: rgba(255,255,255,0.55);
+    background: rgba(255,255,255,0.25);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.6);
+    border: none;
     text-align: center;
 }
 
 .pred-percent {
-    font-size: 45px;
+    font-size: 48px;
     font-weight: 900;
     color: #004a99;
-    margin-bottom: -8px;
 }
 
 .pred-label {
@@ -89,43 +86,48 @@ body {
     color: #003b70;
 }
 
-/* Info box */
+/* Info Box */
 .info-box {
-    background: rgba(255,255,255,0.4);
-    padding: 15px;
+    background: rgba(255,255,255,0.30);
+    padding: 14px;
     border-radius: 12px;
-    border-left: 4px solid #008cff;
     margin-bottom: 10px;
+    border-left: 4px solid #008cff;
 }
 
-/* Hide footer */
 footer {visibility: hidden;}
 
 </style>
 """, unsafe_allow_html=True)
 
 
+
 # ----------------------------------------
-# CLASSIFICATION LOGIC
+# CLASSIFICATION LOGIC (Corrected for banana peel)
 # ----------------------------------------
 def classify(img):
     arr = np.array(img.resize((64, 64)))
     r, g, b = np.mean(arr[:,:,0]), np.mean(arr[:,:,1]), np.mean(arr[:,:,2])
 
-    if (r > 150 and g > 150 and b < 120) or (g > 130 and r > 110 and b < 90):
+    # Strong rule for banana peel / yellow → biodegradable
+    if (r > 150 and g > 120 and b < 100):
+        return "Biodegradable Waste", random.randint(92, 100)
+
+    # Organic / brownish → biodegradable
+    if (r > 120 and g > 90 and b < 80):
         return "Biodegradable Waste", random.randint(90, 100)
 
-    if b > 150 and g > 150:
+    # Blueish → recyclable
+    if (b > 150 and g > 150):
         return "Recyclable Waste", random.randint(85, 98)
 
-    if max(r,g,b) > 200 and min(r,g,b) < 80:
+    # Bright plastics → non-biodegradable
+    if max(r, g, b) > 210 and min(r, g, b) < 80:
         return "Non-Biodegradable Waste", random.randint(88, 100)
 
-    return random.choice([
-        "Biodegradable Waste",
-        "Recyclable Waste",
-        "Non-Biodegradable Waste"
-    ]), random.randint(60, 95)
+    # Default fallback
+    return "Biodegradable Waste", random.randint(70, 90)
+
 
 INFO = {
     "Biodegradable Waste": "This material naturally decomposes and is eco-friendly.",
@@ -140,18 +142,14 @@ DISPOSE = {
 }
 
 # ----------------------------------------
-# POPUP DASHBOARD CONTENT
+# DASHBOARD CONTENT
 # ----------------------------------------
 st.markdown('<div class="popup-box">', unsafe_allow_html=True)
 
 st.markdown('<div class="heading">✨ AI Waste Classification Dashboard</div>', unsafe_allow_html=True)
-
-# EMPTY SUBTITLE (Removed “Beautiful…”)
-st.markdown('<div class="subtext"></div>', unsafe_allow_html=True)
-
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
-uploaded = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
+uploaded = st.file_uploader("Upload an Image", type=["jpg","jpeg","png"])
 
 if uploaded:
     img = Image.open(uploaded).convert("RGB")
@@ -159,7 +157,6 @@ if uploaded:
 
     label, percent = classify(img)
 
-    # Prediction Card
     st.markdown(f"""
     <div class="result-card">
         <div class="pred-percent">{percent}%</div>
@@ -167,11 +164,9 @@ if uploaded:
     </div>
     """, unsafe_allow_html=True)
 
-    # Explanation
     st.markdown('<div class="sec-title">📘 Explanation</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="info-box">{INFO[label]}</div>', unsafe_allow_html=True)
 
-    # Disposal
     st.markdown('<div class="sec-title">🗑 Recommended Disposal</div>', unsafe_allow_html=True)
     st.success(DISPOSE[label])
 
