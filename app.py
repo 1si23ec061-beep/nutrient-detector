@@ -6,7 +6,7 @@ import random
 st.set_page_config(page_title="AI Waste Classifier", layout="centered")
 
 # ----------------------------------------
-# CLEAN UI (No “Beautiful” Subtitle)
+# CLEAN UI (NO WHITE BOARD)
 # ----------------------------------------
 st.markdown("""
 <style>
@@ -16,19 +16,15 @@ body {
     font-family: 'Segoe UI', sans-serif;
 }
 
-/* MAIN POPUP CONTAINER */
+/* MAIN container (now fully transparent, no board) */
 .popup-box {
     max-width: 700px;
     margin: auto;
-    margin-top: 20px;
-    padding: 25px;
-    border-radius: 18px;
-
-    background: rgba(255,255,255,0.45);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255,255,255,0.4);
-
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    margin-top: 10px;
+    padding: 10px; /* very small padding */
+    background: transparent !important;  /* remove white board */
+    border: none !important;             /* remove border */
+    box-shadow: none !important;         /* remove shadow */
 }
 
 /* Title */
@@ -39,10 +35,10 @@ body {
     color: #0066cc;
 }
 
-/* Empty Subtitle (Removed “Beautiful”) */
+/* EMPTY Subtitle */
 .subtext {
     text-align: center;
-    margin-bottom: 15px;
+    margin-bottom: 5px;
     color: #333;
 }
 
@@ -50,24 +46,24 @@ body {
 .divider {
     height: 3px;
     width: 110px;
-    margin: 10px auto 20px auto;
+    margin: 10px auto 15px auto;
     background: #0099ff;
-    opacity: 0.7;
+    opacity: 0.6;
     border-radius: 20px;
 }
 
-/* Result Card */
+/* Result Card (light transparent) */
 .result-card {
     padding: 18px;
-    margin-top: 18px;
-    border-radius: 15px;
+    margin-top: 15px;
+    border-radius: 12px;
 
-    background: rgba(255,255,255,0.55);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.6);
-    text-align: center;
+    background: rgba(255,255,255,0.30);
+    backdrop-filter: blur(8px);
+    border: none;
 }
 
+/* Prediction text */
 .pred-percent {
     font-size: 45px;
     font-weight: 900;
@@ -85,20 +81,18 @@ body {
 .sec-title {
     font-size: 24px;
     font-weight: 800;
-    margin-top: 20px;
+    margin-top: 15px;
     color: #003b70;
 }
 
 /* Info box */
 .info-box {
-    background: rgba(255,255,255,0.4);
-    padding: 15px;
-    border-radius: 12px;
-    border-left: 4px solid #008cff;
+    background: rgba(255,255,255,0.25);
+    padding: 12px;
+    border-radius: 10px;
     margin-bottom: 10px;
 }
 
-/* Hide footer */
 footer {visibility: hidden;}
 
 </style>
@@ -121,11 +115,8 @@ def classify(img):
     if max(r,g,b) > 200 and min(r,g,b) < 80:
         return "Non-Biodegradable Waste", random.randint(88, 100)
 
-    return random.choice([
-        "Biodegradable Waste",
-        "Recyclable Waste",
-        "Non-Biodegradable Waste"
-    ]), random.randint(60, 95)
+    return random.choice(["Biodegradable Waste", "Recyclable Waste", "Non-Biodegradable Waste"]), random.randint(60, 95)
+
 
 INFO = {
     "Biodegradable Waste": "This material naturally decomposes and is eco-friendly.",
@@ -145,10 +136,7 @@ DISPOSE = {
 st.markdown('<div class="popup-box">', unsafe_allow_html=True)
 
 st.markdown('<div class="heading">✨ AI Waste Classification Dashboard</div>', unsafe_allow_html=True)
-
-# EMPTY SUBTITLE (Removed “Beautiful…”)
 st.markdown('<div class="subtext"></div>', unsafe_allow_html=True)
-
 st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
 uploaded = st.file_uploader("Upload an Image", type=["jpg", "jpeg", "png"])
@@ -159,7 +147,6 @@ if uploaded:
 
     label, percent = classify(img)
 
-    # Prediction Card
     st.markdown(f"""
     <div class="result-card">
         <div class="pred-percent">{percent}%</div>
@@ -167,11 +154,9 @@ if uploaded:
     </div>
     """, unsafe_allow_html=True)
 
-    # Explanation
     st.markdown('<div class="sec-title">📘 Explanation</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="info-box">{INFO[label]}</div>', unsafe_allow_html=True)
 
-    # Disposal
     st.markdown('<div class="sec-title">🗑 Recommended Disposal</div>', unsafe_allow_html=True)
     st.success(DISPOSE[label])
 
